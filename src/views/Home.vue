@@ -77,6 +77,26 @@ export default {
   methods: {
     async submitFormInvite() {
       console.log("Submit form invite");
+      const response = await fetch(`http://localhost:3000/rooms/${this.idRoom}`)
+      .then((room) =>  room.json())
+      .then((room) => {
+        console.log("ROOM NEW ->", room);
+        const dataUser = { name: this.nameUser, value: -1 };
+        const newUser = fetch(
+          `http://localhost:3000/rooms/${room.id}/users`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(dataUser),
+          }
+        );
+        return newUser;
+      })
+      .then((user) => user.json())
+      .catch((e) => alert("No pudimos enviar tu respuesta :("));
+      console.log(response);
     },
     async submitFormHost() {
       console.log("Submit form Host");
