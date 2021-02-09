@@ -2,11 +2,16 @@
   <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container">
       <router-link class="navbar-brand" to="/">ScrumPoker</router-link>
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <router-link class="nav-link" to="/game">Game</router-link>
-        </li>
-      </ul>
+      <span class="navbar-text"> {{ userState.userName }} </span>
     </div>
   </nav>
 </template>
+
+<script lang="ts">
+import { mapState } from "vuex";
+export default {
+  computed:{
+    ...mapState(['userState'])
+  }
+}
+</script>

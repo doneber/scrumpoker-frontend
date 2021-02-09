@@ -17,7 +17,7 @@
                 type="text"
                 class="form-control"
                 placeholder="Your name"
-                v-model="nameUser"
+                v-model="userName"
               />
             </div>
             <div class="form-group">
@@ -25,7 +25,7 @@
                 type="text"
                 class="form-control"
                 placeholder="Room name"
-                v-model="nameRoom"
+                v-model="roomName"
               />
             </div>
             <button type="submit" class="btn btn-secondary">Create Room</button>
@@ -40,7 +40,7 @@
                 type="text"
                 class="form-control"
                 placeholder="Your name"
-                v-model="nameUser"
+                v-model="userName"
               />
             </div>
             <div class="form-group">
@@ -48,7 +48,7 @@
                 type="number"
                 class="form-control"
                 placeholder="Room id"
-                v-model="idRoom"
+                v-model="roomId"
               />
             </div>
             <button type="submit" class="btn btn-secondary">Join Room</button>
@@ -64,24 +64,28 @@
 
 <script>
 // @ is an alias to /src
-
+import { mapMutations } from "vuex"
 export default {
   name: "Home",
   data() {
     return {
-      nameUser: "Im the user",
-      nameRoom: "nameRoom",
-      idRoom: 2,
+      userName: "Im the user",
+      userId: 6,
+      roomName: "roomName",
+      roomId: 2,
     };
   },
   methods: {
+    ...mapMutations(['SET_USER_STATE']),
     async submitFormInvite() {
       console.log("Submit form invite");
-      const response = await fetch(`http://localhost:3000/rooms/${this.idRoom}`)
+      const theUser = await fetch(`http://localhost:3000/rooms/${this.roomId}`)
       .then((room) =>  room.json())
       .then((room) => {
         console.log("ROOM NEW ->", room);
-        const dataUser = { name: this.nameUser, value: -1 };
+        this.roomName = room.name // 4 vuex
+        this.roomId = room.id // 4 vuex
+        const dataUser = { name: this.userName, value: -1 };
         const newUser = fetch(
           `http://localhost:3000/rooms/${room.id}/users`,
           {
@@ -96,11 +100,14 @@ export default {
       })
       .then((user) => user.json())
       .catch((e) => alert("No pudimos enviar tu respuesta :("));
-      console.log(response);
+      this.userName = theUser.name // 4 vuex
+      this.userId = theUser.id // 4 vuex
+      this.$store.commit('SET_USER_STATE', {userName:this.userName, userId:this.userId, roomName:this.roomName, roomId:this.roomId,})
+      this.$router.push('/game')
     },
     async submitFormHost() {
       console.log("Submit form Host");
-      const data = { nameRoom: this.nameRoom };
+      const data = { roomName: this.roomName };
       const response = await fetch(`http://localhost:3000/rooms`, {
         method: "POST",
         headers: {
@@ -111,7 +118,7 @@ export default {
         .then((res) => res.json())
         .then((room) => {
           console.log("ROOM NEW ->", room);
-          const dataUser = { name: this.nameUser, value: -1 };
+          const dataUser = { name: this.userName, value: -1 };
           const newUser = fetch(
             `http://localhost:3000/rooms/${room.id}/users`,
             {

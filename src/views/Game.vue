@@ -1,7 +1,7 @@
 <template>
-  <div class="container" style="height: 90vh">
-    <h2>Scrum Teams</h2>
-    <p>
+  <div class="container" style="height: 90vh; ">
+    <h2 style="text-align:center">Scrum Teams</h2>
+    <p style="text-align:center">
       {{ room.name }} / <span>ID: {{ room.id }} </span>
     </p>
     <!-- Card user: -->
@@ -15,7 +15,7 @@
           <div class="d-inline-flex">
             <h5>{{ user.name }}</h5>
           </div>
-          <scrum-card class="enemy-card" :value="user.value" :hidden="true">
+          <scrum-card class="enemy-card" :value="parseInt(user.value)" :hidden="true">
           </scrum-card>
         </div>
       </div>
@@ -30,7 +30,7 @@
           class="table-scrum-child d-flex align-items-center justify-content-center"
         >
           <h1>
-            {{ generalValue }}
+            {{ avgValue() }}
           </h1>
         </div>
       </div>
@@ -42,9 +42,9 @@
           class="my-card"
           v-for="(value, index) in cards"
           :key="`${index}-card-value`"
-          :value="value"
+          :value="parseInt(value)"
           :hidden="false"
-          @click="sendMyAnswer(value)"
+          @click="sendMyAnswer(parseInt(value))"
         >
           {{ value }}
         </scrum-card>
@@ -54,44 +54,57 @@
 </template>
 <script>
 import ScrumCard from "@/components/ScrumCard.vue";
+import { mapState } from "vuex"
 export default {
   name: "Game",
+  async created() {
+    this.roomId = this.userState.roomId
+    this.userId = this.userState.userId
+    const vRoom = await fetch(
+      `http://localhost:3000/rooms/${this.roomId}`
+    ).then((response) => response.json());
+    this.users = vRoom.users;
+    this.room = { name: vRoom.name, id: vRoom.id };
+    console.log("Loaded successfull");
+  },
   data() {
     return {
-      idRoom: 2,
-      idUser: 5,
-      room: { name: 'Room test', id: '007' },
+      roomId: 1612879341003,
+      userId: 1612879341013,
+      room: { name: null, id: null },
       cards: [1, 2, 3, 5, 8, 13, 21, 34, 55],
-      users: [
-        { id: 3, name: "name 3", value: 5 },
-        { id: 4, name: "name 4", value: 8 },
-        { id: 5, name: "name 5", value: 5 },
-        { id: 6, name: "name 6", value: 13 },
-      ],
+      users: [],
     };
   },
+    computed: {
+      ...mapState(['userState']),
+
+    },
   components: {
     ScrumCard,
   },
   methods: {
     async sendMyAnswer(value) {
       console.log(value);
-      const data = { id: this.idUser, name: "don eber", value };
+      console.log(`Sending to: http://localhost:3000/rooms/${this.roomId}/users/${this.userId}`);
       const response = await fetch(
-        `http://localhost:3000/rooms/${this.idRoom}/users`,
+        `http://localhost:3000/rooms/${this.roomId}/users/${this.userId}`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({value}),
         }
       )
-        .then((e) => {
-          console.log;
-        })
-        .catch((e) => alert("No pudimos enviar tu respuesta :("));
+      .catch((err) => {alert("No pudimos enviar tu respuesta :("); console.log(err);});
+      console.log('RESPONSE:',response);
     },
+    avgValue(){
+      // return this.users?Object.values(this.users).reduce((t, {value}) => t + value, 0):0
+      return this.users?this.users.reduce((sum, {value}) => sum + value, 0):0
+      
+    }
   },
 };
 </script>
