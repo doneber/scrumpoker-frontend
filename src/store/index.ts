@@ -2,13 +2,10 @@ import { createStore } from "vuex";
 
 export default createStore({
   state: {
-    userState: {userName: 'defaultUserName', userId: 5, roomName: 'defaultRoomName', roomId: 2,}
+    userState: {userName: null, userId: null, roomName: null, roomId: null }
   },
   mutations: {
-    SET_USER_STATE (state, {userName,
-      userId,
-      roomName,
-      roomId}) {
+    SET_USER_STATE (state, { userName, userId, roomName, roomId }) {
       state.userState.userName= userName
       state.userState.userId= userId
       state.userState.roomName= roomName

@@ -2,7 +2,7 @@
   <div class="container" style="height: 90vh; ">
     <h2 style="text-align:center">Scrum Teams</h2>
     <p style="text-align:center">
-      {{ room.name }} / <span>ID: {{ room.id }} </span>
+      {{ roomName+'1s' }} / <span>ID: {{ roomId }} </span>
     </p>
     <!-- Card user: -->
     <div style="height: 25vh; overflow-y: auto" class="mb-4">
@@ -54,24 +54,34 @@
 </template>
 <script>
 import ScrumCard from "@/components/ScrumCard.vue";
-import { mapState } from "vuex"
+import { mapState, mapMutations } from "vuex"
 export default {
   name: "Game",
   async created() {
+    const savedScrumPokerData = await JSON.parse(localStorage.getItem('scrum-poker-data'))
+    if (savedScrumPokerData && !this.userState.roomId) {
+      this.$store.commit('SET_USER_STATE', savedScrumPokerData)
+    }
     this.roomId = this.userState.roomId
     this.userId = this.userState.userId
+    this.roomName = this.userState.roomName
+    this.userName = this.userState.userName
+
     const vRoom = await fetch(
       `http://localhost:3000/rooms/${this.roomId}`
     ).then((response) => response.json());
-    this.users = vRoom.users;
-    this.room = { name: vRoom.name, id: vRoom.id };
-    console.log("Loaded successfull");
+
+    const usersRecieved = await fetch(
+      `http://localhost:3000/rooms/${this.roomId}/users`
+    ).then(e=>e.json())
+    this.users = usersRecieved
   },
   data() {
     return {
-      roomId: 1612879341003,
-      userId: 1612879341013,
-      room: { name: null, id: null },
+      roomId: null,
+      userId: null,
+      roomName: null,
+      userName: null,
       cards: [1, 2, 3, 5, 8, 13, 21, 34, 55],
       users: [],
     };
@@ -84,9 +94,8 @@ export default {
     ScrumCard,
   },
   methods: {
+    ...mapMutations(['SET_USER_STATE']),
     async sendMyAnswer(value) {
-      console.log(value);
-      console.log(`Sending to: http://localhost:3000/rooms/${this.roomId}/users/${this.userId}`);
       const response = await fetch(
         `http://localhost:3000/rooms/${this.roomId}/users/${this.userId}`,
         {
@@ -97,13 +106,10 @@ export default {
           body: JSON.stringify({value}),
         }
       )
-      .catch((err) => {alert("No pudimos enviar tu respuesta :("); console.log(err);});
-      console.log('RESPONSE:',response);
     },
     avgValue(){
       // return this.users?Object.values(this.users).reduce((t, {value}) => t + value, 0):0
       return this.users?this.users.reduce((sum, {value}) => sum + value, 0):0
-      
     }
   },
 };
@@ -125,9 +131,6 @@ export default {
   border-radius: 25px;
   padding: 10px;
   opacity: 90%;
-}
-span {
-  font-weight: bold;
 }
 .enemy-card {
   height: 140px;

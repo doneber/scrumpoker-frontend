@@ -45,7 +45,7 @@
             </div>
             <div class="form-group">
               <input
-                type="number"
+                type="text"
                 class="form-control"
                 placeholder="Room id"
                 v-model="roomId"
@@ -69,10 +69,10 @@ export default {
   name: "Home",
   data() {
     return {
-      userName: "Im the user",
-      userId: 6,
-      roomName: "roomName",
-      roomId: 2,
+      userName:  null,
+      userId: null,
+      roomName: null,
+      roomId: null,
     };
   },
   methods: {
@@ -85,7 +85,7 @@ export default {
         console.log("ROOM NEW ->", room);
         this.roomName = room.name // 4 vuex
         this.roomId = room.id // 4 vuex
-        const dataUser = { name: this.userName, value: -1 };
+        const dataUser = { name: this.userName};
         const newUser = fetch(
           `http://localhost:3000/rooms/${room.id}/users`,
           {
@@ -103,12 +103,13 @@ export default {
       this.userName = theUser.name // 4 vuex
       this.userId = theUser.id // 4 vuex
       this.$store.commit('SET_USER_STATE', {userName:this.userName, userId:this.userId, roomName:this.roomName, roomId:this.roomId,})
+      localStorage.setItem('scrum-poker-data',JSON.stringify({userName:this.userName, userId:this.userId, roomName:this.roomName, roomId:this.roomId,}))
       this.$router.push('/game')
     },
     async submitFormHost() {
       console.log("Submit form Host");
-      const data = { roomName: this.roomName };
-      const response = await fetch(`http://localhost:3000/rooms`, {
+      const data = { name: this.roomName };
+      const theUser = await fetch(`http://localhost:3000/rooms`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,6 +119,8 @@ export default {
         .then((res) => res.json())
         .then((room) => {
           console.log("ROOM NEW ->", room);
+          this.roomName = room.name // 4 vuex
+          this.roomId = room.id // 4 vuex
           const dataUser = { name: this.userName, value: -1 };
           const newUser = fetch(
             `http://localhost:3000/rooms/${room.id}/users`,
@@ -133,7 +136,12 @@ export default {
         })
         .then((user) => user.json())
         .catch((e) => alert("No pudimos enviar tu respuesta :("));
-      console.log("User: ", response);
+      this.userName = theUser.name // 4 vuex
+      this.userId = theUser.id // 4 vuex
+      this.$store.commit('SET_USER_STATE', {userName:this.userName, userId:this.userId, roomName:this.roomName, roomId:this.roomId,})
+      console.log("User: ", theUser);
+      localStorage.setItem('scrum-poker-data',JSON.stringify({userName:this.userName, userId:this.userId, roomName:this.roomName, roomId:this.roomId,}))
+      this.$router.push('/game')
     },
   },
 };
