@@ -1,9 +1,9 @@
 <template>
   <div class="scrum-card">
-    <div :class="[hidden?'escudo':'cara']" style="background:white">
+    <div :class="[hidden?'escudo':'cara', active?'active':'']" style="background:white">
       {{ value }}
     </div>
-    <div :class="[hidden?'cara':'escudo']" style="background:whitesmoke">
+    <div :class="[hidden?'cara':'escudo', active?'active':'']" style="background:whitesmoke">
       {{ ["♦", "♣", "♠", "♥"][parseInt(Math.random() * 4)] }}
     </div>
   </div>
@@ -14,16 +14,22 @@ import { Options, Vue } from "vue-class-component";
 
 @Options({
   props: {
-    value: String,
+    value: Number,
     hidden: Boolean,
+    active: Boolean,
   },
 })
 export default class Navbar extends Vue {
-  value!: string;
+  value!: number;
   hidden!: boolean;
+  active!: boolean;
 }
 </script>
 <style scoped>
+.active{
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16), 0 4px 10px rgba(0, 0, 0, 0.23);
+}
 .scrum-card {
   height: 140px;
   width: 115px;

@@ -1,23 +1,35 @@
 <template>
   <div class="container" style="height: 90vh; ">
-    <h2 style="text-align:center">Scrum Teams</h2>
     <p style="text-align:center">
-      {{ roomName+'1s' }} / <span>ID: {{ roomId }} </span>
+      {{ roomName }} / <span>ID: {{ roomId }} </span>
     </p>
+    <center>
+    <button class="btn btn-secondary my-3" @click="resetValues()">Reset round</button>
+    </center>
+    <h3 style="text-align:center">Scrum Team</h3>
     <!-- Card user: -->
     <div style="height: 25vh; overflow-y: auto" class="mb-4">
       <div class="d-flex flex-wrap justify-content-around">
-        <div
-          class="d-flex flex-column align-items-center justify-content-center mx-3 my-2"
+        <template
           v-for="(user, index) in users"
           :key="`${index}-card-user`"
         >
-          <div class="d-inline-flex">
-            <h5>{{ user.name }}</h5>
+          <div
+            class="d-flex flex-column align-items-center justify-content-center mx-3 my-2"
+            v-if="user.id != userId"
+          >
+            <div class="d-inline-flex">
+              <h5>{{ user.name }}</h5>
+            </div>
+            <scrum-card
+              class="enemy-card"
+              :value="parseInt(user.value)"
+              :hidden="allVoted?false:true"
+              :active="user.value>0?true:false"
+            >
+            </scrum-card>
           </div>
-          <scrum-card class="enemy-card" :value="parseInt(user.value)" :hidden="true">
-          </scrum-card>
-        </div>
+        </template>
       </div>
     </div>
     <!-- Table scrum: -->
@@ -30,7 +42,7 @@
           class="table-scrum-child d-flex align-items-center justify-content-center"
         >
           <h1>
-            {{ avgValue() }}
+            {{ allVoted?avgValue():'?' }}
           </h1>
         </div>
       </div>
@@ -38,16 +50,21 @@
     <!-- My card -->
     <div style="overflow-y: auto">
       <div class="d-flex flex-wrap justify-content-around mt-3 py-2 px-3">
-        <scrum-card
-          class="my-card"
+        <template
           v-for="(value, index) in cards"
           :key="`${index}-card-value`"
-          :value="parseInt(value)"
-          :hidden="false"
-          @click="sendMyAnswer(parseInt(value))"
         >
-          {{ value }}
-        </scrum-card>
+          <scrum-card
+            class="my-card"
+            :value="parseInt(value)"
+            :hidden="false"
+            :active="myUser.value==value?true:false"
+            @click="sendMyAnswer(parseInt(value))"
+          >
+            {{ value }}
+          </scrum-card>
+
+        </template>
       </div>
     </div>
   </div>
@@ -75,6 +92,7 @@ export default {
       `http://localhost:3000/rooms/${this.roomId}/users`
     ).then(e=>e.json())
     this.users = usersRecieved
+    this.myUser = this.users.find(user => user.id == this.userId)
   },
   data() {
     return {
@@ -88,12 +106,28 @@ export default {
   },
     computed: {
       ...mapState(['userState']),
-
+    allVoted(){
+      return this.users.every(user=>user.value>=0)
+    },
     },
   components: {
     ScrumCard,
   },
   methods: {
+    async resetValues(){
+      this.users.map(async (user)=>{
+      const response = await fetch(
+        `http://localhost:3000/rooms/${this.roomId}/users/${user.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({value:-1}),
+        }
+      )
+      })
+    },
     ...mapMutations(['SET_USER_STATE']),
     async sendMyAnswer(value) {
       const response = await fetch(
@@ -106,10 +140,11 @@ export default {
           body: JSON.stringify({value}),
         }
       )
+      this.myUser.value = value
     },
     avgValue(){
       // return this.users?Object.values(this.users).reduce((t, {value}) => t + value, 0):0
-      return this.users?this.users.reduce((sum, {value}) => sum + value, 0):0
+      return this.users?parseInt(this.users.reduce((sum, {value}) => sum + value, 0)/this.users.length):0
     }
   },
 };
@@ -135,9 +170,9 @@ export default {
 .enemy-card {
   height: 140px;
   width: 115px;
+  transform: scale(1.1);
 }
 .enemy-card:hover {
-  transform: scale(1.1);
   z-index: 100;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.16), 0 6px 12px rgba(0, 0, 0, 0.23);
 }
